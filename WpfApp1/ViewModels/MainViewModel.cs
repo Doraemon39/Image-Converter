@@ -16,6 +16,14 @@ public partial class MainViewModel : ObservableObject
 {
     private CancellationTokenSource? _cts;
 
+    /// <summary>持久化临时文件根目录，用于崩溃恢复</summary>
+    private static readonly string TempRoot = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "图片转换", "temp");
+
+    /// <summary>标记转换中是否发生了错误，用于 finally 判断是否保留临时文件</summary>
+    private bool _hasError;
+
     // ==================== 可绑定属性 ====================
 
     /// <summary>已选择的文件列表</summary>
@@ -237,8 +245,10 @@ public partial class MainViewModel : ObservableObject
         int done = 0, skipped = 0, failed = 0, imageCount = 0;
         var outputItems = new List<(string FilePath, string ZipPath)>();
         var usedOutputPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var tempDir = Path.Combine(Path.GetTempPath(), "PicConvert_" + Guid.NewGuid().ToString("N"));
+        var sessionId = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var tempDir = Path.Combine(TempRoot, sessionId);
         Directory.CreateDirectory(tempDir);
+        bool saved = false; // 追踪是否已成功保存，决定 finally 中是否清理临时文件
 
         StatusText = "正在转换，请不要关闭窗口。";
         Log($"开始处理 {SelectedFiles.Count} 个文件，目标格式：{info.Extension.ToUpperInvariant()}，质量：{quality}%", "ok");
@@ -346,6 +356,7 @@ public partial class MainViewModel : ObservableObject
                 if (saveDlg.ShowDialog() == true)
                 {
                     await Task.Run(() => ZipService.CreateZip(outputItems, saveDlg.FileName), ct);
+                    saved = true;
                     StatusText = $"完成：成功 {done}，跳过 {skipped}，失败 {failed}，已保存 {saveDlg.FileName}";
                     Log($"完成，已生成：{saveDlg.FileName}", "ok");
                 }
@@ -369,6 +380,7 @@ public partial class MainViewModel : ObservableObject
                 if (saveDlg.ShowDialog() == true)
                 {
                     File.Copy(single.FilePath, saveDlg.FileName, overwrite: true);
+                    saved = true;
                     StatusText = $"完成：已保存 {Path.GetFileName(saveDlg.FileName)}";
                     Log($"完成，已生成：{saveDlg.FileName}", "ok");
                 }
@@ -386,8 +398,9 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
+            _hasError = true;
             Log($"❌ 发生未预期的错误：{ex.Message}", "err");
-            StatusText = $"操作失败：{ex.Message}";
+            StatusText = $"操作失败：{ex.Message}（已转换的文件已保留，重启应用可恢复）";
             ProgressValue = 0;
         }
         finally
@@ -395,9 +408,13 @@ public partial class MainViewModel : ObservableObject
             IsProcessing = false;
             _cts = null;
 
-            // 清理临时目录
-            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true); }
-            catch { /* 忽略清理错误 */ }
+            // 仅在成功保存或用户取消时清理临时目录；出错时保留以便恢复
+            if (saved || !_hasError)
+            {
+                try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true); }
+                catch { /* 忽略清理错误 */ }
+            }
+            _hasError = false;
         }
     }
 
@@ -408,6 +425,107 @@ public partial class MainViewModel : ObservableObject
         _cts?.Cancel();
         Log("正在取消...", "warn");
     }
+
+    /// <summary>
+    /// 启动时检测上次崩溃遗留的临时文件，提示用户恢复或清理。
+    /// </summary>
+    public async Task TryRecoverFromCrashAsync()
+    {
+        if (!Directory.Exists(TempRoot))
+            return;
+
+        var sessionDirs = Directory.GetDirectories(TempRoot);
+        if (sessionDirs.Length == 0)
+            return;
+
+        // 按目录名排序，处理最早的残留会话
+        foreach (var dir in sessionDirs.OrderBy(d => d))
+        {
+            var files = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
+            if (files.Length == 0)
+            {
+                try { Directory.Delete(dir, true); } catch { }
+                continue;
+            }
+
+            var totalSize = files.Sum(f =>
+            {
+                try { return new FileInfo(f).Length; } catch { return 0L; }
+            });
+
+            var result = await Task.Run(() =>
+                System.Windows.MessageBox.Show(
+                    $"检测到上次异常退出的转换结果：\n\n" +
+                    $"文件数：{files.Length} 个\n" +
+                    $"总大小：{FormatFileSize(totalSize)}\n" +
+                    $"时间：{Path.GetFileName(dir)}",
+                    "图片转换 — 恢复",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Question));
+
+            if (result == System.Windows.MessageBoxResult.Yes)
+            {
+                await RecoverFilesAsync(files, dir);
+            }
+            else
+            {
+                // 用户选择不恢复，清理
+                try { Directory.Delete(dir, true); } catch { }
+            }
+
+            return; // 一次只处理一个会话
+        }
+    }
+
+    /// <summary>将恢复文件导出到桌面</summary>
+    private async Task RecoverFilesAsync(string[] files, string sessionDir)
+    {
+        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        var recoveryDir = Path.Combine(desktop,
+            $"图片转换_恢复_{Path.GetFileName(sessionDir)}");
+        Directory.CreateDirectory(recoveryDir);
+
+        int copied = 0;
+        await Task.Run(() =>
+        {
+            foreach (var file in files)
+            {
+                var fileName = Path.GetFileName(file);
+                var dest = Path.Combine(recoveryDir, fileName);
+
+                // 文件名冲突时追加序号
+                if (File.Exists(dest))
+                {
+                    var name = Path.GetFileNameWithoutExtension(fileName);
+                    var ext = Path.GetExtension(fileName);
+                    int counter = 2;
+                    do
+                    {
+                        dest = Path.Combine(recoveryDir, $"{name}_{counter}{ext}");
+                        counter++;
+                    } while (File.Exists(dest));
+                }
+
+                File.Copy(file, dest, overwrite: false);
+                copied++;
+            }
+        });
+
+        Log($"已恢复 {copied} 个文件到：{recoveryDir}", "ok");
+        StatusText = $"已恢复 {copied} 个文件到桌面。";
+
+        // 恢复完成后清理
+        try { Directory.Delete(sessionDir, true); } catch { }
+    }
+
+    /// <summary>格式化文件大小</summary>
+    private static string FormatFileSize(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:F1} KB",
+        < 1024 * 1024 * 1024 => $"{bytes / (1024.0 * 1024):F1} MB",
+        _ => $"{bytes / (1024.0 * 1024 * 1024):F2} GB"
+    };
 
     /// <summary>清空记录</summary>
     [RelayCommand]
@@ -422,6 +540,15 @@ public partial class MainViewModel : ObservableObject
 
         StartConvertCommand.NotifyCanExecuteChanged();
         ScanOnlyCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>打开临时文件目录</summary>
+    [RelayCommand]
+    private void OpenTempFolder()
+    {
+        if (!Directory.Exists(TempRoot))
+            Directory.CreateDirectory(TempRoot);
+        System.Diagnostics.Process.Start("explorer.exe", TempRoot);
     }
 
     // ==================== 辅助方法 ====================

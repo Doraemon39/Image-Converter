@@ -278,6 +278,10 @@
                             Style="{StaticResource SecondaryButton}"
                             Command="{Binding ClearCommand}"
                             Margin="0,0,14,10"/>
+                    <Button Content="📁 临时目录"
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding OpenTempFolderCommand}"
+                            Margin="0,0,14,10"/>
                 </WrapPanel>
 
                 <!-- ========== 统计面板 ========== -->

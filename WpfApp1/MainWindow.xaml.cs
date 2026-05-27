@@ -27,7 +27,7 @@ namespace WpfApp1
         /// 使用 WorkArea 而非 PrimaryScreenWidth/Height，以排除任务栏遮挡。
         /// WPF 坐标系统本身就是 DIP（设备无关像素），因此这里的值已自动适配系统缩放。
         /// </summary>
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // 必须使用工作区，排除任务栏干扰（尤其任务栏在顶部/侧边时）
             var workArea = SystemParameters.WorkArea;
@@ -42,6 +42,9 @@ namespace WpfApp1
             // 居中于工作区
             Left = workArea.Left + (workArea.Width - targetWidth) / 2;
             Top = workArea.Top + (workArea.Height - targetHeight) / 2;
+
+            // 检测上次崩溃遗留的临时文件，提示恢复
+            await ViewModel.TryRecoverFromCrashAsync();
         }
 
         private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -84,6 +87,18 @@ namespace WpfApp1
         private void CloseBtn_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        /// <summary>窗口关闭前确保取消所有后台操作，不留残留进程</summary>
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            // 取消正在进行的转换/识别操作
+            ViewModel.CancelCommand.Execute(null);
+
+            // 确保应用彻底退出
+            Application.Current.Shutdown();
+
+            base.OnClosing(e);
         }
 
         #endregion

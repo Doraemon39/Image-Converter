@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:WpfApp1"
         xmlns:vm="clr-namespace:WpfApp1.ViewModels"
         mc:Ignorable="d"
-        Title="Picture Converter"
+        Title="Image Converter"
         MinHeight="650" MinWidth="900"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
@@ -98,7 +98,7 @@
                     </Border.Effect>
                     <StackPanel>
                         <!-- 标题 -->
-                        <TextBlock Text="Picture Converter"
+                        <TextBlock Text="Image Converter"
                                    FontSize="36" FontWeight="Bold"
                                    Foreground="{StaticResource TextBrush}"
                                    FontFamily="Microsoft YaHei UI, Segoe UI, sans-serif"/>

@@ -26,9 +26,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private TargetFormatInfo _targetFormat;
 
-    /// <summary>质量 (0.50 ~ 1.00)</summary>
+    /// <summary>质量 (0.50 ~ 1.00)，仅对有损格式生效，1.0 = 最高画质</summary>
     [ObservableProperty]
-    private double _quality = 0.95;
+    private double _quality = 1.0;
 
     /// <summary>ZIP 文件名</summary>
     [ObservableProperty]

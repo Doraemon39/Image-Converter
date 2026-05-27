@@ -18,8 +18,8 @@ public partial class MainViewModel : ObservableObject
 
     /// <summary>持久化临时文件根目录，用于崩溃恢复</summary>
     private static readonly string TempRoot = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "图片转换", "temp");
+        Path.GetTempPath(),
+        "Picture Converter");
 
     /// <summary>标记转换中是否发生了错误，用于 finally 判断是否保留临时文件</summary>
     private bool _hasError;
@@ -459,7 +459,7 @@ public partial class MainViewModel : ObservableObject
                     $"文件数：{files.Length} 个\n" +
                     $"总大小：{FormatFileSize(totalSize)}\n" +
                     $"时间：{Path.GetFileName(dir)}",
-                    "图片转换 — 恢复",
+                    "Picture Converter — Recovery",
                     System.Windows.MessageBoxButton.YesNo,
                     System.Windows.MessageBoxImage.Question));
 
@@ -482,7 +482,7 @@ public partial class MainViewModel : ObservableObject
     {
         var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         var recoveryDir = Path.Combine(desktop,
-            $"图片转换_恢复_{Path.GetFileName(sessionDir)}");
+            $"Picture Converter_Recovery_{Path.GetFileName(sessionDir)}");
         Directory.CreateDirectory(recoveryDir);
 
         int copied = 0;

@@ -23,24 +23,23 @@ namespace WpfApp1
         }
 
         /// <summary>
-        /// 窗口加载时自适应屏幕尺寸
+        /// 窗口加载时自适应屏幕尺寸 — 取屏幕工作区的 80%，居中显示。
+        /// 使用 WorkArea 而非 PrimaryScreenWidth/Height，以排除任务栏遮挡。
+        /// WPF 坐标系统本身就是 DIP（设备无关像素），因此这里的值已自动适配系统缩放。
         /// </summary>
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // 获取主屏幕工作区域（排除任务栏）
+            // 必须使用工作区，排除任务栏干扰（尤其任务栏在顶部/侧边时）
             var workArea = SystemParameters.WorkArea;
 
-            // 取屏幕 80% 大小，但有上下限
-            double targetWidth = Math.Min(workArea.Width * 0.82, 1200);
-            double targetHeight = Math.Min(workArea.Height * 0.85, 850);
-
-            targetWidth = Math.Max(targetWidth, MinWidth);
-            targetHeight = Math.Max(targetHeight, MinHeight);
+            // 80% 工作区大小，不低于最小限制
+            double targetWidth = Math.Max(workArea.Width * 0.80, MinWidth);
+            double targetHeight = Math.Max(workArea.Height * 0.80, MinHeight);
 
             Width = targetWidth;
             Height = targetHeight;
 
-            // 居中
+            // 居中于工作区
             Left = workArea.Left + (workArea.Width - targetWidth) / 2;
             Top = workArea.Top + (workArea.Height - targetHeight) / 2;
         }

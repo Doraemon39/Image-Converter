@@ -376,6 +376,12 @@ public partial class MainViewModel : ObservableObject
             StatusText = "操作已取消。";
             ProgressValue = 0;
         }
+        catch (Exception ex)
+        {
+            Log($"❌ 发生未预期的错误：{ex.Message}", "err");
+            StatusText = $"操作失败：{ex.Message}";
+            ProgressValue = 0;
+        }
         finally
         {
             IsProcessing = false;

@@ -201,12 +201,20 @@ public partial class MainViewModel : ObservableObject
             Log("操作已取消。", "warn");
             ProgressValue = 0;
         }
+        catch (Exception ex)
+        {
+            Log($"❌ 识别过程发生错误：{ex.Message}", "err");
+            StatusText = $"识别失败：{ex.Message}";
+            ProgressValue = 0;
+        }
         finally
         {
             ImageCount = imageCount;
             SkipCount = skipped;
             FailCount = failed;
-            StatusText = $"识别完成：图片 {imageCount}，跳过 {skipped}，失败 {failed}";
+            // 只在正常完成时覆盖状态，保留 catch 中设置的错误消息
+            if (StatusText == null || !StatusText.StartsWith("识别失败"))
+                StatusText = $"识别完成：图片 {imageCount}，跳过 {skipped}，失败 {failed}";
             IsProcessing = false;
             _cts = null;
         }

@@ -22,7 +22,10 @@ public static class ZipService
         if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
             Directory.CreateDirectory(outputDir);
 
-        using var zip = ZipFile.Open(outputZipPath, ZipArchiveMode.Create);
+        // 使用 FileMode.Create 确保覆盖已存在的文件
+        // （ZipFile.Open + ZipArchiveMode.Create 在某些 .NET 版本中不会自动覆盖）
+        using var stream = new FileStream(outputZipPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        using var zip = new ZipArchive(stream, ZipArchiveMode.Create);
 
         foreach (var (filePath, entryPath) in files)
         {

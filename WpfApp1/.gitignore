@@ -1,0 +1,16 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.vsidx
+*.DotSettings.user
+
+## Visual Studio / VS Code
+.vs/
+.vscode/
+
+## OS
+Thumbs.db
+Desktop.ini
+.DS_Store

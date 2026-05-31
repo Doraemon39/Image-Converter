@@ -1,16 +1,47 @@
-## .NET
+## Build outputs
 bin/
 obj/
+out/
+
+## .NET / NuGet
 *.user
 *.suo
 *.vsidx
 *.DotSettings.user
+*.nupkg
+*.snupkg
+project.lock.json
+*.nuget.props
+*.nuget.targets
+*.dgspec.json
+*.cache
 
-## Visual Studio / VS Code
+## Visual Studio
 .vs/
+*.sln.docstates
+
+## VS Code
 .vscode/
 
-## OS
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## Windows
 Thumbs.db
 Desktop.ini
+ehthumbs.db
+
+## macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+## Linux
+*~
+
+## Publish output
+publish/
+
+## User-specific
+launchSettings.json

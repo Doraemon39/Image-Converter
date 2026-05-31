@@ -1,6 +1,6 @@
 # Image Converter 🖼️
 
-一个现代化的 WPF 桌面图片格式转换工具，支持 100+ 图片格式互转，基于文件头魔数（Magic Bytes）识别真实图片格式，而非依赖不可靠的文件扩展名。
+WPF 桌面图片格式转换工具，支持 100+ 图片格式互转，基于文件头魔数（Magic Bytes）识别真实图片格式，而非依赖不可靠的文件扩展名。
 
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple)
 ![WPF](https://img.shields.io/badge/UI-WPF-blue)

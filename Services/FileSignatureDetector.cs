@@ -1,6 +1,6 @@
-using WpfApp1.Models;
+using ImageConverter.Models;
 
-namespace WpfApp1.Services;
+namespace ImageConverter.Services;
 
 /// <summary>
 /// 通过读取文件头魔数（magic bytes）识别真实图片格式，不依赖扩展名。

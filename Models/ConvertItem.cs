@@ -1,4 +1,4 @@
-namespace WpfApp1.Models;
+namespace ImageConverter.Models;
 
 /// <summary>
 /// 表示一个待转换或已转换的文件项

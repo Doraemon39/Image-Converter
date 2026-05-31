@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using WpfApp1.ViewModels;
+using ImageConverter.ViewModels;
 
-namespace WpfApp1
+namespace ImageConverter
 {
     /// <summary>
     /// 主窗口 — 自适应屏幕分辨率、自定义标题栏、居中显示

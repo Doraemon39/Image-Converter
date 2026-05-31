@@ -4,10 +4,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ImageMagick;
 using Microsoft.Win32;
-using WpfApp1.Models;
-using WpfApp1.Services;
+using ImageConverter.Models;
+using ImageConverter.Services;
 
-namespace WpfApp1.ViewModels;
+namespace ImageConverter.ViewModels;
 
 /// <summary>
 /// 主窗口 ViewModel，管理图片转换的全部逻辑。

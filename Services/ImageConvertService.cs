@@ -1,6 +1,6 @@
 using ImageMagick;
 
-namespace WpfApp1.Services;
+namespace ImageConverter.Services;
 
 /// <summary>
 /// 基于 Magick.NET 的图片转换服务，支持 100+ 格式互转。

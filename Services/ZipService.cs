@@ -1,6 +1,6 @@
 using System.IO.Compression;
 
-namespace WpfApp1.Services;
+namespace ImageConverter.Services;
 
 /// <summary>
 /// 基于 System.IO.Compression 的 ZIP 打包服务

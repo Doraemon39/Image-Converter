@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Threading;
 
-namespace WpfApp1
+namespace ImageConverter
 {
     /// <summary>
     /// Interaction logic for App.xaml

@@ -141,7 +141,7 @@ Image-Converter/
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-username/ImageConverter.git
+git clone https://github.com/Doraemon39/Image-Converter.git
 cd ImageConverter
 
 # 2. 还原依赖

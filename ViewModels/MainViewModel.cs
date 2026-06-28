@@ -84,7 +84,8 @@ public partial class MainViewModel : ObservableObject
 
     // ==================== 格式列表 ====================
 
-    public static List<TargetFormatInfo> AvailableFormats { get; } =
+    /// <summary>所有候选格式（静态定义）</summary>
+    private static readonly List<TargetFormatInfo> AllCandidateFormats =
     [
         new TargetFormatInfo("JPG / JPEG（通用、体积小）", "jpg", "image/jpeg", true),
         new TargetFormatInfo("PNG（无损、保留透明）", "png", "image/png", false),
@@ -95,11 +96,28 @@ public partial class MainViewModel : ObservableObject
         new TargetFormatInfo("HEIC（苹果高效格式）", "heic", "image/heic", true),
     ];
 
+    /// <summary>运行时检测后实际可用的格式列表（过滤掉不支持编码的格式）</summary>
+    public static List<TargetFormatInfo> AvailableFormats { get; } =
+        AllCandidateFormats
+            .Where(f => ImageConvertService.SupportsWritingExtension(f.Extension))
+            .ToList();
+
     // ==================== 构造函数 ====================
 
     public MainViewModel()
     {
-        TargetFormat = AvailableFormats[0];
+        TargetFormat = AvailableFormats.Count > 0 ? AvailableFormats[0] : AllCandidateFormats[0];
+
+        // 将不可写入的格式打印到调试日志，方便排查
+        var unsupported = AllCandidateFormats
+            .Where(f => !ImageConvertService.SupportsWritingExtension(f.Extension))
+            .ToList();
+        if (unsupported.Count > 0)
+        {
+            var names = string.Join("、", unsupported.Select(f => f.Extension.ToUpperInvariant()));
+            System.Diagnostics.Debug.WriteLine(
+                $"[ImageConverter] 以下格式在当前环境不支持编码写入：{names}");
+        }
     }
 
     // ==================== 命令 ====================

@@ -7,6 +7,51 @@ namespace ImageConverter.Services;
 /// </summary>
 public static class ImageConvertService
 {
+    /// <summary>不支持编码（写入）的格式集合，在静态构造中通过运行时检测填充</summary>
+    private static readonly HashSet<MagickFormat> UnsupportedWriteFormats = new();
+
+    static ImageConvertService()
+    {
+        // 检测所有目标格式中哪些不支持写入
+        var targetFormats = new[]
+        {
+            MagickFormat.Jpeg, MagickFormat.Png, MagickFormat.WebP,
+            MagickFormat.Avif, MagickFormat.Bmp, MagickFormat.Gif,
+            MagickFormat.Tiff, MagickFormat.Heic, MagickFormat.Heif
+        };
+
+        foreach (var fmt in targetFormats)
+        {
+            try
+            {
+                var info = MagickFormatInfo.Create(fmt);
+                if (info == null || !info.SupportsWriting)
+                {
+                    UnsupportedWriteFormats.Add(fmt);
+                }
+            }
+            catch
+            {
+                UnsupportedWriteFormats.Add(fmt);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 检查指定格式是否支持编码（写入）
+    /// </summary>
+    public static bool SupportsWriting(MagickFormat format)
+    {
+        return !UnsupportedWriteFormats.Contains(format);
+    }
+
+    /// <summary>
+    /// 获取扩展名对应的 MagickFormat 是否支持写入
+    /// </summary>
+    public static bool SupportsWritingExtension(string ext)
+    {
+        return SupportsWriting(GetMagickFormat(ext));
+    }
     /// <summary>
     /// 将图片转换为指定格式
     /// </summary>
@@ -53,7 +98,8 @@ public static class ImageConvertService
                 Directory.CreateDirectory(outputDir);
             }
 
-            image.Write(outputPath);
+            // 显式传入目标格式写入，避免 ImageMagick 内部从源格式推导
+            image.Write(outputPath, targetFormat);
         }, ct);
     }
 
